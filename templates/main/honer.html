@@ -79,7 +79,7 @@
     function switchHallView(type) {
         hallViewType = type;
         document.querySelectorAll('.hall-tab-btn').forEach(btn => {
-            btn.classList.toggle('border-b-2 border-blue-500', btn.dataset.view === type);
+            // btn.classList.toggle('border-b-2 border-blue-500', btn.dataset.view === type);
         });
         renderHallOfFame();
     }
