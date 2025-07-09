@@ -1,56 +1,121 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>칭찬하기</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
+
 <body class="bg-white min-w-[300px] max-w-[360px] mx-auto rounded-lg shadow-lg">
 
   {% include 'login/header.html' %}
 
   <main class="p-4 space-y-4 text-sm">
     <!-- 프로필 비교: 작게 -->
-
     <div class="flex justify-evenly">
       <div class="flex flex-col items-center">
-        <img id="fromPhoto" src="{{ url_for('static', filename='img/profile.png') }}" alt="송신인" class="w-12 h-12 rounded-full mb-1" />
-        <span id="fromName" class="truncate w-16 text-center">송신인</span>
-      </div>
-      
-      <div class="flex flex-col items-center">
-          <img id="toPhoto" src="{{ url_for('static', filename='img/profile.png') }}" alt="수신인" class="w-12 h-12 rounded-full mb-1" />
-          <span id="toName" class="truncate w-16 text-center">수신인</span>
+        <img id="toPhoto"
+             src="{{ url_for('static', filename='img/profile.png') }}"
+             alt="수신인"
+             class="w-12 h-12 rounded-full mb-1" />
+        <span id="toName" class="truncate w-16 text-center">수신인</span>
       </div>
     </div>
-    
 
     <!-- 입력 폼: 컴팩트 -->
     <section>
-      <textarea id="praiseInput" rows="3" class="w-full h-30 border-0 resize-none border-gray-300 rounded px-2 py-1 focus:outline-none" placeholder="칭찬 내용을 입력하세요 (50자 이내)" {%if mode == 'readonly'%} disabled {%endif%}>
-          하드코딩 (데이터)
-      </textarea>
+      {% if mode == 'readonly' %}
+        <textarea id="praiseInput"
+                  rows="3"
+                  class="w-full h-30 resize-none border-gray-300 rounded px-2 py-1 focus:outline-none"
+                  disabled></textarea>
+      {% else %}
+        <textarea id="praiseInput"
+                  rows="3"
+                  class="w-full h-30 resize-none border-gray-300 rounded px-2 py-1 focus:outline-none"
+                  placeholder="칭찬 내용을 입력하세요 (50자 이내)"></textarea>
+      {% endif %}
     </section>
 
     <!-- 버튼 그룹: 작게 -->
     <section class="flex justify-between">
-
-      {%if mode != 'readonly'%}
-        <button id="submitPraise" class="flex-1 bg-blue-500 text-white px-4 py-1 rounded mr-1 text-sm ">등록</button>
-      {%endif%}
-
-      <a href="{{ url_for('main_page') }}" id="cancelPraise" class="flex-1 bg-gray-200 text-gray-700 px-4 py-1 rounded ml-1 text-sm">취소</a>
+      {% if mode != 'readonly' %}
+        <button id="submitPraise"
+                class="flex-1 bg-blue-500 text-white px-4 py-1 rounded mr-1 text-sm">
+          등록
+        </button>
+      {% endif %}
+      <a href="{{ url_for('main_page') }}"
+         id="cancelPraise"
+         class="flex-1 bg-gray-200 text-gray-700 px-4 py-1 rounded ml-1 text-sm">
+        닫기
+      </a>
     </section>
   </main>
 
   <script>
-    function cancelPraise() {
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1) sessionStorage에서 selectedUser 꺼내기
+      const raw = sessionStorage.getItem('selectedUser');
+      if (!raw) {
+        alert('칭찬할 사용자가 선택되지 않았습니다.');
         window.close();
-    }
+        return;
+      }
+      // 2) 꺼낸 직후 세션스토리지에서 제거 (한 번만 사용)
+      sessionStorage.removeItem('selectedUser');
 
-    document.getElementById('cancelPraise').addEventListener('click', () => window.close());
-    // TODO: submitPraise 클릭 이벤트로 API 호출 추가
+      const user = JSON.parse(raw);
+      // 3) UI 초기화
+      document.getElementById("toName").textContent = user.name;
+      document.getElementById("toPhoto").src        = user.photo;
+      const to_id = user._id;
+      
+      // 4) 등록 핸들러
+      async function submitPraiseHandler() {
+        const content = document.getElementById("praiseInput").value.trim();
+        if (!content) {
+          alert("칭찬 내용을 입력하세요.");
+          return;
+        }
+        try {
+          // 내 정보 조회
+          const meRes  = await fetch("/auth/me", {
+            method: "GET",
+            credentials: "include"
+          });
+          if (!meRes.ok) throw new Error("내 정보 조회 실패");
+          const meData = await meRes.json();
+          const from_id = meData.user_id || meData._id;
+
+          // 칭찬 전송
+          const payload = { to_id, from_id, content };
+          const praiseRes = await fetch("/praises", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(payload)
+          });
+          if (!praiseRes.ok) throw new Error("칭찬 전송 실패");
+
+          alert("칭찬이 등록되었습니다! 🎉");
+          window.close();
+        } catch (err) {
+          console.error(err);
+          alert("오류가 발생했습니다. 다시 시도해주세요.");
+        }
+      }
+
+      // 이벤트 바인딩
+      const submitBtn = document.getElementById('submitPraise');
+      if (submitBtn) submitBtn.addEventListener('click', submitPraiseHandler);
+
+      const cancelBtn = document.getElementById('cancelPraise');
+      cancelBtn.addEventListener('click', () => window.close());
+    });
   </script>
 </body>
+
 </html>

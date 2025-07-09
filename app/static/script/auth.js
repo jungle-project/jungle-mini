@@ -105,7 +105,7 @@ async function requestPasswordReset() {
 /* ---------------- 로그아웃 ---------------- */
 async function logout() {
     try {
-        const res = await fetch('auth/logout', {
+        const res = await fetch('/auth/logout', {
             method: 'POST',
             credentials: 'include',
         });

@@ -4,9 +4,24 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required
 from app import mongo
 from datetime import datetime,timedelta
+from bson import ObjectId
 
 bp = Blueprint("users", __name__, url_prefix="/api/users")
 
+@bp.get('/<user_id>')
+def get_user(user_id):
+    doc = mongo.db.users.find_one({"_id": ObjectId(user_id)}, {"password":0})
+    if not doc:
+        return jsonify({"error":"사용자를 찾을 수 없습니다."}), 404
+    # ObjectId → str
+    doc["_id"] = str(doc["_id"])
+    return jsonify({
+        "id":          doc["_id"],
+        "name":        doc["name"],
+        "profile_url": doc.get("profile_url", ""),
+        "praises":     mongo.db.praises.count_documents({"to_id": doc["_id"]})
+    })
+    
 @bp.get("")
 @login_required
 def list_users():

@@ -54,9 +54,45 @@ def get_praise(praise_id):
 # 3) 내가 받은 칭찬 리스트
 @bp.get("/received/<user_id>")
 def list_received(user_id):
-    cur  = mongo.db.praises.find({"to_id": ObjectId(user_id)}).sort("created_at", -1)
-    docs = [oid_to_str(d) for d in cur]
-    return jsonify(docs)
+    try:
+        pipeline = [
+            # 1) 해당 사용자가 받은 칭찬만
+            { "$match": { "to_id": ObjectId(user_id) } },
+
+            # 2) 최신순 정렬
+            { "$sort": { "created_at": -1 } },
+
+            # 3) 작성자 이름 가져오기 (users 컬렉션 조인)
+            { "$lookup": {
+                "from": "users",
+                "localField": "from_id",
+                "foreignField": "_id",
+                "as": "from_user"
+            }},
+            { "$unwind": "$from_user" },
+
+            # 4) 필요한 필드만 투영
+            { "$project": {
+                "_id":        0,
+                "from_id":    { "$toString": "$from_id" },
+                "from_name":  "$from_user.name",
+                "content":    1,
+                "like_count": 1,
+                "created_at": 1
+            }}
+        ]
+
+        docs = list(mongo.db.praises.aggregate(pipeline))
+
+        # 5) Python datetime → ISO 문자열
+        for d in docs:
+            if isinstance(d.get("created_at"), datetime):
+                d["created_at"] = d["created_at"].isoformat()
+
+        return jsonify(docs)
+
+    except Exception as e:
+        abort(500, f"목록 조회 실패: {e}")
 
 
 # 4) 내가 보낸 칭찬 리스트

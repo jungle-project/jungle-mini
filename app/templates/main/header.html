@@ -1,47 +1,89 @@
 <div class="w-full h-20 flex justify-evenly mt-5">
-    <div class="flex items-center">
-        <img class="h-full object-fill" src="{{ url_for('static', filename='img/logo.png') }}" />
+  <!-- 로고 -->
+  <div class="flex items-center">
+    <img
+      class="h-full object-fill"
+      src="{{ url_for('static', filename='img/logo.png') }}"
+      alt="로고"
+    />
+  </div>
+
+  <!-- 타이틀 -->
+  <div class="flex items-center">
+    <p class="font-bold text-5xl">칭찬감옥</p>
+  </div>
+
+  <!-- 프로필 / 이름 / 로그아웃 / 알림 -->
+  <div class="flex flex-row items-center space-x-6">
+    <!-- 1. 프로필 이미지 (클릭 시 JS로 세션스토리지에 내 정보 저장 후 /profile 이동) -->
+    <a href="#" onclick="openMyProfile()">
+      <img
+        class="h-12 w-12 rounded-full object-cover"
+        src="{{ current_user.profile_url or url_for('static', filename='img/profile.png') }}"
+        alt="{{ current_user.name }} 프로필"
+      />
+    </a>
+
+    <!-- 2. 사용자 이름 & 로그아웃 -->
+    <div class="flex flex-col items-start">
+      <p class="font-normal">{{ current_user.name }}</p>
+      <button
+        type="button"
+        data-action="logout"
+        class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded focus:outline-none focus:shadow-outline text-sm"
+      >
+        로그아웃
+      </button>
     </div>
 
-    <div class="flex items-center">
-        <p class="font-bold text-5xl">칭찬감옥</p>
+    <!-- 3. 알림 아이콘 & 카운트 -->
+    <div class="relative inline-block text-left">
+      <div class="absolute top-0 right-0 transform translate-x-1/2 -translate-y-1/2 text-xs text-white bg-red-600 rounded-full w-5 h-5 flex items-center justify-center">
+        {{ current_user.unread_alarm_count or 0 }}
+      </div>
+      <a href="#" onclick="alaramDropDownHandler('visible');">
+        <img
+          class="h-10 w-10 object-contain"
+          src="{{ url_for('static', filename='img/alarm.png') }}"
+          alt="알림"
+        />
+      </a>
+      <div
+        id="alaramDropBoxContent"
+        onclick="alaramDropDownHandler('invisible');"
+        class="hidden absolute right-0 mt-2 w-48 bg-white rounded shadow"
+      >
+        {% if current_user.recent_alarms %}
+          {% for alarm in current_user.recent_alarms %}
+            <a
+              href="{{ alarm.link }}"
+              class="block px-4 py-2 text-gray-800 hover:bg-blue-100"
+            >
+              {{ alarm.text }}
+            </a>
+          {% endfor %}
+        {% else %}
+          <p class="px-4 py-2 text-gray-500">새 알림이 없습니다.</p>
+        {% endif %}
+      </div>
     </div>
-
-    <div class="flex flex-row items-center">
-        <a href="">
-            <img class="h-full object-scale-down" src="{{ url_for('static', filename='img/profile.png') }}"/>
-        </a>
-            
-        
-        <div>
-            <p class="font-normal">하드코딩</p>
-            <button class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="button" data-action="logout">
-                로그아웃
-            </button>
-        </div>
-
-
-        <div class="relative inline-block text-left">
-            <div class="mt-5 w-full">
-                <div class="absolute z-10 ml-10 text-center">
-                    <div class="absolute z-11 transform(-50%, -50%) top: 50% left: 50%">100</div>
-                    <img class="w-10 h-10 object-fill inline-block" src="{{ url_for('static', filename='img/alarmCountBg.png') }}">
-                </div>
-                
-                <a href="#" onclick="alaramDropDownHandler('visible');">
-                    <img class="h-full object-scale-down" src="{{ url_for('static', filename='img/alarm.png') }}"/>
-                </a>
-
-                <div id="alaramDropBoxContent" onclick="alaramDropDownHandler('invisible');" class="hidden absolute w-48 bg-white rounded shadow mt-2">
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                    <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
-                </div>
-            </div>
-        </div>
-    
-    </div>
+  </div>
 </div>
+
+<script>
+  function openMyProfile() {
+    // 1) current_user 정보를 JS로 받아 세션스토리지에 저장
+    const me = {
+      id:   "{{ current_user.id }}",
+      name: "{{ current_user.name }}",
+      photo: "{{ current_user.profile_url or url_for('static', filename='img/profile.png') }}"
+    };
+    sessionStorage.setItem('selectedUserProfile', JSON.stringify(me));
+    // 2) 프로필 페이지로 이동
+    window.location.href = '/profile';
+  }
+
+  // logout 핸들러
+  document.querySelector('button[data-action="logout"]')
+    .addEventListener('click', logout);
+</script>
