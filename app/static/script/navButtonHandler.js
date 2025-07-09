@@ -3,6 +3,8 @@ function navButtonHandler(name) {
     const honorView = document.getElementById('honorView');
     const mainButton = document.getElementById('mainButton');
     const honorButton = document.getElementById('honorButton');
+    
+
 
     if (name === 'main') {
         mainView.className = 'visible inline-block';
@@ -15,4 +17,6 @@ function navButtonHandler(name) {
         honorButton.className = 'hover:bg-blue-700 bg-blue-700 text-gray-700 px-4 py-2 rounded';
         mainButton.className = 'hover:bg-blue-700 px-4 py-2 rounded';
     }
+
+
 }

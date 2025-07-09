@@ -1,0 +1,56 @@
+<div class="flex flex-col items-center">
+    <div class="flex justify-between mt-3 mb-3">
+        <p class="w-30">받은 사람</p>
+        <p>코멘트</p>
+    </div>
+
+    <!-- JS가 내용을 주입할 자리 -->
+    <div id="topPraiseList" class="space-y-1 text-center"></div>
+
+    <script>
+        /* ---------- 공통 fetch ---------- */
+        async function fetchJSON(path) {
+            const res = await fetch(path, { credentials: 'include' });
+            if (!res.ok) throw new Error('API');
+            return res.json();
+        }
+
+        /* ---------- 두 모드 로더 ---------- */
+        async function loadLikeTop() {   // 공감 기준
+            const data = await fetchJSON('/praises/top?limit=10');
+            renderList(data.map((p, i) => `${i + 1}. ${p.receiver} - “${p.content}”`));
+        }
+
+        async function loadUserTop() {   // 사람 기준
+            const data = await fetchJSON('/api/users/top?limit=10');
+            renderList(data.map((u, i) => `${i + 1}. ${u.name} ( ${u.praises}회 )`));
+        }
+
+        /* ---------- 목록 그리기 ---------- */
+        function renderList(lines) {
+            document.getElementById('top10-list').innerHTML =
+                lines.map(t => `<li>${t}</li>`).join('');
+        }
+
+        /* ---------- 탭 활성화 토글 ---------- */
+        function activate(btnLoadFn, activeBtn, inactiveBtn) {
+            inactiveBtn.classList.remove('bg-blue-700', 'font-semibold');
+            activeBtn.classList.add('bg-blue-700', 'font-semibold');
+            btnLoadFn().catch(console.error);
+        }
+
+        /* ---------- 이벤트 바인딩 + 최초 실행 ---------- */
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnLike = document.getElementById('btn-like-top10');
+            const btnUser = document.getElementById('btn-user-top10');
+
+            btnLike.onclick = () => activate(loadLikeTop, btnLike, btnUser);
+            btnUser.onclick = () => activate(loadUserTop, btnUser, btnLike);
+
+            /* 기본 화면 = 공감 칭찬 TOP10 */
+            activate(loadLikeTop, btnLike, btnUser);
+        });
+    </script>
+    
+    <ul id="top10-list" class="space-y-1 text-center"></ul>
+</div>

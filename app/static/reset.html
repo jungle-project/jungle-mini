@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>비밀번호 재설정</title>
+  <style>
+    body{font-family:sans-serif;max-width:360px;margin:60px auto;text-align:center}
+    input{width:100%;padding:8px 10px;margin-top:10px;font-size:14px}
+    button{width:100%;padding:10px;margin-top:18px;font-size:15px;cursor:pointer}
+    #msg{margin-top:20px;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <h2>새 비밀번호 설정</h2>
+
+  <input id="pw1" type="password" placeholder="새 비밀번호" />
+  <input id="pw2" type="password" placeholder="비밀번호 확인" />
+
+  <button id="submit">변경하기</button>
+  <div id="msg"></div>
+
+  <script>
+    // ── 1. 토큰을 URL 쿼리에서 추출
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    if(!token){
+      document.getElementById("msg").textContent = "유효하지 않은 접근입니다.";
+      document.getElementById("submit").disabled = true;
+    }
+
+    // ── 2. 제출 로직
+    document.getElementById("submit").onclick = async () => {
+      const pw1 = document.getElementById("pw1").value.trim();
+      const pw2 = document.getElementById("pw2").value.trim();
+
+      if(pw1.length < 8){
+        return alert("비밀번호는 최소 8자 이상이어야 합니다.");
+      }
+      if(pw1 !== pw2){
+        return alert("비밀번호가 일치하지 않습니다.");
+      }
+
+      const res = await fetch(`/auth/reset/${token}`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ password: pw1 })
+      });
+      const msg = await res.text();
+      document.getElementById("msg").textContent =
+        `Status ${res.status}\n${msg}`;
+
+      if(res.ok){
+        alert("변경 완료! 로그인 페이지로 이동합니다.");
+        location.href = "/";
+      }
+    };
+  </script>
+</body>
+</html>

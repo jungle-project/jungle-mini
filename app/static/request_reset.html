@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>비밀번호 찾기</title>
+  <style>
+    body{font-family:sans-serif;max-width:360px;margin:60px auto;text-align:center}
+    input{width:100%;padding:8px 10px;margin-top:12px;font-size:14px}
+    button{width:100%;padding:10px;margin-top:18px;font-size:15px;cursor:pointer}
+    #msg{margin-top:20px;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <h2>비밀번호 찾기</h2>
+
+  <input id="email" type="email" placeholder="가입 이메일" />
+  <button id="submit">메일 발송</button>
+
+  <div id="msg"></div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    $("submit").onclick = async () => {
+      const email = $("email").value.trim();
+      if(!email){
+        return alert("이메일을 입력해주세요.");
+      }
+
+      const res = await fetch("/auth/request-reset", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ email })
+      });
+      const text = await res.text();
+      $("msg").textContent = `Status ${res.status}\n${text}`;
+
+      if(res.ok){
+        alert("메일이 발송되었습니다. 메일함을 확인해 주세요!");
+      }
+    };
+  </script>
+</body>
+</html>
