@@ -3,6 +3,7 @@ from math import ceil
 from flask import Blueprint, request, jsonify
 from flask_login import login_required
 from app import mongo
+from datetime import datetime,timedelta
 
 bp = Blueprint("users", __name__, url_prefix="/api/users")
 
@@ -71,3 +72,43 @@ def top_users():
         { "$project": { "_id":0, "name":1, "praises":1 } }
     ]
     return jsonify(list(mongo.db.users.aggregate(pipeline)))
+
+@bp.get("/top_lastweek")
+@login_required
+def top_users_lastweek():
+    try:
+        today = datetime.utcnow()
+        day = today.weekday()
+        th_offset = (day - 3) if day >= 3 else (7 - (3 -  day))
+        end = today - timedelta(days=th_offset + 7)
+        start = end - timedelta(days=6)
+        
+        pipeline = [
+            { "$match": {
+                "created_at": { "$gte": start, "$lte": end }
+            }},
+            { "$group": {
+                "_id": "$to_id",
+                "count": { "$sum": 1 }
+            }},
+            { "$sort": { "count": -1 } },
+            { "$limit": 3 },
+            { "$lookup": {
+                "from": "users", # join할 컬렉션
+                "localField": "_id", # PK -> users_pk
+                "foreignField": "_id", # FK -> praises_pk
+                "as": "user" #as
+            }},
+            { "$unwind": { "path": "$user", "preserveNullAndEmptyArrays": True } },
+            { "$project": {
+                "_id": 0,
+                "user_id": { "$toString": "$_id" },
+                "name": "$user.name",
+                "profile_url": "$user.profile_url",
+                "count": 1
+            }}
+        ]
+        result = list(mongo.db.praises.aggregate(pipeline))
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

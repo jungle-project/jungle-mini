@@ -1,7 +1,7 @@
 # app/__init__.py
 import os
 from datetime import timedelta
-from flask import Flask, redirect, url_for, render_template
+from flask import Flask, redirect, url_for, render_template,request
 from flask_pymongo import PyMongo
 from flask_mail import Mail
 from flask_bcrypt import Bcrypt
@@ -67,6 +67,11 @@ def create_app() -> Flask:
     @app.route("/login")
     def login_page():
         return render_template("login/login.html")
+
+    @app.route('/modal')
+    def modal():
+        mode = request.args.get('mode', default = 'readonly', type = str)
+        return render_template('modal/praiseModal.html', mode=mode)
     
     @app.route("/signup")
     def signup_page():
@@ -75,6 +80,10 @@ def create_app() -> Flask:
     @app.route("/findpassword")
     def findpassword_page():
         return render_template("login/findPassword.html")
+    
+    @app.route('/profile')
+    def profile():
+        return render_template("main/profile.html")
     
     @app.route("/main")
     def main_page():
@@ -124,12 +133,11 @@ def create_app() -> Flask:
     # ────────────────────────────────────────────────────
 
     # ── 블루프린트 등록 ─────────────────────────────────
-    from app.routes import auth, praises, likes, users, web
+    from app.routes import auth, praises, likes, users
     app.register_blueprint(auth.bp)
     app.register_blueprint(praises.bp)
     app.register_blueprint(likes.bp)
     app.register_blueprint(users.bp)
-    app.register_blueprint(web.bp)
     # ────────────────────────────────────────────────────
 
     return app

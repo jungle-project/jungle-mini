@@ -1,6 +1,6 @@
 <script src="/static/script/dummy.js"></script>
 <script>
-    const praiselist = generatePraiseList(50);
+    // const praiselist = generatePraiseList(50); // 더미 데이터 사용 X
 </script>
 
 <!-- 명예의 전당 (Tab + 기간 선택 + 결과) -->
@@ -20,21 +20,24 @@
         </div>
 
         <!-- 기간 선택 -->
-        <div class="flex items-center gap-4 mt-4">
-            <label for="hallWeekRange" class="font-medium">조회 기간:</label>
-            <select id="hallWeekRange" class="border px-2 py-1 rounded"></select>
-            <button onclick="renderHallOfFame()" class="bg-blue-500 text-white px-4 py-1 rounded">조회</button>
+        <div class="flex justify-evenly mt-3 mb-3" id="log-sort-filter">
+            <div class="flex items-center gap-4">
+                <label for="hallWeekRange" class="font-medium">조회 기간:</label>
+                <select id="hallWeekRange" class="border px-2 py-1 rounded"></select>
+                <button onclick="renderHallOfFame()" class="bg-blue-500 text-white px-4 py-1 rounded">조회</button>
+            </div>
+
+            <!-- 결과 및 패이징 영역 -->
+            <div class="flex items-center">
+                <label for="hallSortSelect" class="mr-2 text-sm font-medium text-gray-700">정렬 기준:</label>
+                <select id="hallSortSelect" class="border px-2 py-1 rounded text-sm" onchange="renderHallOfFame()">
+                    <option value="empathy">공감순</option>
+                    <option value="date">최신순</option>
+                    <option value="name">이름순</option>
+                </select>
+            </div>
         </div>
 
-        <!-- 결과 및 페이징 영역 -->
-        <div class="flex justify-end mb-4">
-            <label for="hallSortSelect" class="mr-2 text-sm font-medium text-gray-700">정렬 기준:</label>
-            <select id="hallSortSelect" class="border px-2 py-1 rounded text-sm" onchange="renderHallOfFame()">
-                <option value="empathy">공감순</option>
-                <option value="date">최신순</option>
-                <option value="name">이름순</option>
-            </select>
-        </div>
         <div id="hallResults" class="mt-6"></div>
         <div id="hallPagination" class="flex justify-center items-center gap-1 text-sm text-gray-700 mt-4"></div>
     </div>
@@ -46,6 +49,7 @@
     let hallFiltered = [];
     let hallPage = 1;
     const ITEMS_PER_PAGE = 9;
+    let logSortFilter = document.getElementById('log-sort-filter');
 
     // 날짜 포맷 유틸
     function formatDate(date) {
@@ -76,6 +80,40 @@
         }
     }
 
+    // 지난주 TOP3 렌더 함수
+    function renderLastWeekTop3() {
+        const results = document.getElementById('hallResults');
+        results.innerHTML = '<div class="col-span-3 text-center text-gray-400">로딩 중...</div>';
+        results.className = 'mt-3 grid grid-cols-3 gap-4';
+
+        fetch('/api/users/top_lastweek')
+            .then(res => {
+                if (!res.ok) throw new Error('API 오류');
+                return res.json();
+            })
+            .then(top => {
+                console.log(top)
+                results.innerHTML = '';
+                if (!top || !top.length) {
+                    results.innerHTML = '<div class="col-span-3 text-center text-gray-500">지난주 데이터가 없습니다.</div>';
+                    return;
+                }
+                top.forEach((u, idx) => {
+                    results.innerHTML += `
+                        <div class="bg-white p-4 rounded shadow text-center">
+                            <div class="text-2xl font-bold text-blue-500 mb-2">${idx + 1}위</div>
+                            <img src="${u.profile_url || 'https://via.placeholder.com/100'}" class="mx-auto mb-2 rounded-full w-24 h-24 object-cover"/>
+                            <h3 class="font-bold mt-2">${u.name}</h3>
+                            <p class="text-sm text-gray-600">칭찬 수: ${u.count}</p>
+                        </div>
+                    `;
+                });
+            })
+            .catch(() => {
+                results.innerHTML = '<div class="col-span-3 text-center text-red-500">서버 오류</div>';
+            });
+    }
+
     // 뷰 타입 전환
     function switchHallView(type) {
         hallViewType = type;
@@ -83,51 +121,52 @@
             btn.classList.toggle('border-b-2', btn.dataset.view === type);
             btn.classList.toggle('border-blue-500', btn.dataset.view === type);
         });
-        renderHallOfFame();
+        if (type === 'lastweek') {
+            renderLastWeekTop3();
+            logSortFilter.classList.add('hidden');
+        } else {
+            renderHallOfFame();
+        }
     }
 
-    // 명예의 전당 렌더
+    // 명예의 전당 렌더 (lastweek 분기 제거)
     function renderHallOfFame() {
         const wk = parseInt(document.getElementById('hallWeekRange').value, 10);
         const { start, end } = getWeekRange(wk);
         const results = document.getElementById('hallResults');
         const pg = document.getElementById('hallPagination');
-        const sortKey = document.getElementById('hallSortSelect')?.value || 'empathy';
-
-        // 필터
-        hallFiltered = praiselist.filter(p => {
-            const d = new Date(p.date);
-            return d >= new Date(start) && d <= new Date(end);
-        });
         results.innerHTML = '';
         pg.innerHTML = '';
         hallPage = 1;
-
         if (hallViewType === 'top-users') {
-            const map = {};
-            hallFiltered.forEach(p => { if (!map[p.to]) map[p.to] = { name: p.to, count: 0, photo: p.photo }; map[p.to].count++; });
-            const top = Object.values(map).sort((a, b) => b.count - a.count).slice(0, 3);
-            results.className = 'grid grid-cols-3 gap-4';
-            top.forEach(u => {
-                results.innerHTML += `
-          <div class="bg-white p-4 rounded shadow text-center">
-            <img src="${u.photo || 'https://via.placeholder.com/100'}" class="mx-auto mb-2 rounded-full w-24 h-24"/>
-            <h3 class="font-bold">${u.name}</h3>
-            <p class="text-sm text-gray-600">칭찬 수: ${u.count}</p>
-          </div>`;
-            });
+            randerToggle('praises');
         } else {
-            // 공감 받은 칭찬 목록
-            if (sortKey === 'empathy') {
-                hallFiltered.sort((a, b) => b.empathy - a.empathy);
-            } else if (sortKey === 'date') {
-                hallFiltered.sort((a, b) => new Date(b.date) - new Date(a.date));
-            } else if (sortKey === 'name') {
-                hallFiltered.sort((a, b) => a.to.localeCompare(b.to));
-            }
-            renderPraisePage(); // 정렬된 hallFiltered를 기반으로 출력
+            randerToggle('empathy');
         }
     }
+
+    function randerToggle(target) {
+        const empathy = document.getElementById('hallSortSelect');
+        const sortKey = document.getElementById('hallSortSelect')?.value || 'empathy';
+
+        if (sortKey === 'empathy') {
+            hallFiltered.sort((a, b) => b.empathy - a.empathy);
+        } else if (sortKey === 'date') {
+            hallFiltered.sort((a, b) => new Date(b.date) - new Date(a.date));
+        } else if (sortKey === 'name') {
+            hallFiltered.sort((a, b) => a.to.localeCompare(b.to));
+        }
+
+        if (target == 'empathy') {
+            empathy.firstElementChild.textContent = '공감순';
+        } else {
+            empathy.firstElementChild.textContent = '칭찬순';
+        }
+        logSortFilter.classList.remove('hidden');
+
+        renderPraisePage(); // 정렬된 hallFiltered를 기반으로 출력
+    }
+
     // 공감 칭찬 페이징
     function renderPraisePage() {
         const results = document.getElementById('hallResults');
@@ -141,9 +180,9 @@
         slice.forEach((p, i) => {
             const rank = idxStart + i + 1;
             results.innerHTML += `<div class="bg-white px-4 py-2 rounded shadow flex justify-between text-sm">
-        <span>${rank}. <strong>${p.to}</strong> - ${p.context}</span>
-        <span class="text-blue-600">공감 ${p.empathy}</span><span>칭찬 날짜: ${p.data}</span>
-      </div>`;
+            <span>${rank}. <strong>${p.to}</strong> - ${p.context}</span>
+            <span class="text-blue-600">공감 ${p.empathy}</span><span>칭찬 날짜: ${p.data}</span>
+        </div>`;
         });
         // 페이징 버튼
         const btn = (t, page, dis) => `<button onclick="changePage(${page})" ${dis ? 'disabled class="opacity-50"' : ''} class="px-2 py-1 hover:underline">${t}</button>`;

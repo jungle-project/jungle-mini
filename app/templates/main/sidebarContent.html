@@ -8,7 +8,9 @@
     <div id="topPraiseList" class="space-y-1 text-center"></div>
 
     <script>
-        /* ---------- 공통 fetch ---------- */
+        let topTimer = null; // 하나의 타이머만 관리
+        let currentMode = ''; // 현재 실행 중인 모드 기록
+
         async function fetchJSON(path) {
             const res = await fetch(path, { credentials: 'include' });
             if (!res.ok) throw new Error('API');
@@ -16,12 +18,12 @@
         }
 
         /* ---------- 두 모드 로더 ---------- */
-        async function loadLikeTop() {   // 공감 기준
+        async function loadLikeTop() {
             const data = await fetchJSON('/praises/top?limit=10');
             renderList(data.map((p, i) => `${i + 1}. ${p.receiver} - “${p.content}”`));
         }
 
-        async function loadUserTop() {   // 사람 기준
+        async function loadUserTop() {
             const data = await fetchJSON('/api/users/top?limit=10');
             renderList(data.map((u, i) => `${i + 1}. ${u.name} ( ${u.praises}회 )`));
         }
@@ -29,28 +31,38 @@
         /* ---------- 목록 그리기 ---------- */
         function renderList(lines) {
             document.getElementById('top10-list').innerHTML =
-                lines.map(t => `<li>${t}</li>`).join('');
+                lines.map(t => `<li class='text-center w-80 overflow-hidden truncate'>${t}</li>`).join('');
         }
 
-        /* ---------- 탭 활성화 토글 ---------- */
-        function activate(btnLoadFn, activeBtn, inactiveBtn) {
+        /* ---------- 탭 활성화 + 타이머 제어 ---------- */
+        function activate(loadFn, activeBtn, inactiveBtn, mode) {
+            if (currentMode === mode) return; // 동일 모드 재클릭 방지
+
+            clearInterval(topTimer); // 기존 타이머 정지
+            currentMode = mode;      // 모드 갱신
+
+            // UI 토글
             inactiveBtn.classList.remove('bg-blue-700', 'font-semibold');
             activeBtn.classList.add('bg-blue-700', 'font-semibold');
-            btnLoadFn().catch(console.error);
+
+            // 즉시 실행 + 주기 실행
+            loadFn().catch(console.error);
+            topTimer = setInterval(() => loadFn().catch(console.error), 1000);
         }
 
-        /* ---------- 이벤트 바인딩 + 최초 실행 ---------- */
+        /* ---------- 이벤트 바인딩 ---------- */
         document.addEventListener('DOMContentLoaded', () => {
             const btnLike = document.getElementById('btn-like-top10');
             const btnUser = document.getElementById('btn-user-top10');
 
-            btnLike.onclick = () => activate(loadLikeTop, btnLike, btnUser);
-            btnUser.onclick = () => activate(loadUserTop, btnUser, btnLike);
+            btnLike.onclick = () => activate(loadLikeTop, btnLike, btnUser, 'like');
+            btnUser.onclick = () => activate(loadUserTop, btnUser, btnLike, 'user');
 
-            /* 기본 화면 = 공감 칭찬 TOP10 */
-            activate(loadLikeTop, btnLike, btnUser);
+            // 기본 모드
+            activate(loadLikeTop, btnLike, btnUser, 'like');
         });
     </script>
-    
+
+
     <ul id="top10-list" class="space-y-1 text-center"></ul>
 </div>

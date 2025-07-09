@@ -82,7 +82,6 @@ async function requestPasswordReset() {
         alert('이메일을 입력해주세요.');
         return;
     }
-
     try {
         const res  = await fetch('/auth/request-reset', {
             method  : 'POST',
@@ -103,12 +102,25 @@ async function requestPasswordReset() {
     }
 }
 
-
-/* ---------------- 기타(변경 無) ---------------- */
-async function logout() { /* … 그대로 … */ }
-function findPasswordHandler() { /* … 그대로 … */ }
-function modelCancel() { /* … 그대로 … */ }
-async function loadUserInfo() { /* … 그대로 … */ }
+/* ---------------- 로그아웃 ---------------- */
+async function logout() {
+    try {
+        const res = await fetch('auth/logout', {
+            method: 'POST',
+            credentials: 'include',
+        });
+        const data = await res.json();
+        if (res.ok) {
+            alert(data.msg || '로그아웃되었습니다.');
+            location.href = '/login'; // 로그아웃 후 로그인 페이지로 이동
+        } else {
+            alert(data.msg || '로그아웃에 실패했습니다.');
+        }
+    } catch (err) {
+        console.error('로그아웃 오류:', err);
+        alert('로그아웃 중 오류가 발생했습니다.');
+    }
+}
 
 
 /* ---------- 페이지 로드 시 ---------- */
@@ -124,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 비밀번호 찾기 모달 버튼
     const pwBtn = document.querySelector('button[data-action="pw-reset"]');
     if (pwBtn) pwBtn.onclick = requestPasswordReset;
+
+    //로그아웃 버튼
+    const logoutBtn = document.querySelector('button[data-action="logout"]');
+    if (logoutBtn) logoutBtn.onclick = logout;
 
     // 메인·칭호 페이지에서 사용자 정보 갱신
     if (['/main', '/honor'].includes(location.pathname)) {

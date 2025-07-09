@@ -45,7 +45,7 @@ def register():
 @bp.get("/verify/<token>")
 def verify_email(token):
     try:
-        pid = confirm_token(token, "email-confirm")          # pending_users _id
+        pid = confirm_token(token, "email-confirm") # pending_users _id
     except Exception:
         return {"msg": "만료·위조된 링크"}, 400
 

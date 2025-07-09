@@ -1,3 +1,5 @@
+<script src="{{ url_for('static', filename='script/rendering.js') }}"></script>
+
 <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden">
   <div class="bg-white rounded-lg p-8 max-w-md w-full">
     <img src="">
@@ -25,57 +27,19 @@
   </div>
 
   <script>
-/* 상태 */
-let page = 1, sort = 'name', q = '';
+    // 더미 데이터 및 초기화 코드 삭제
+    // 모든 유저 데이터 및 렌더링 로직은 rendering.js에서 관리
+    function openModal() {
+      document.getElementById('modal').classList.remove('hidden');
+    }
 
-/* DOM */
-const grid = document.getElementById('profileGrid');
-const pager= document.getElementById('pagination');
-document.getElementById('sortSelect').onchange = e => { sort=e.target.value; page=1; load(); };
-document.getElementById('searchInput').oninput = e => { q=e.target.value.trim(); page=1; load(); };
+    function closeModal() {
+      document.getElementById('modal').classList.add('hidden');
+    }
 
-/* API 호출 */
-async function load(){
-  const url = new URL('/api/users', location.origin);
-  url.searchParams.set('sort',sort);
-  url.searchParams.set('page',page);
-  if(q) url.searchParams.set('q',q);
-
-  const res = await fetch(url,{credentials:'include'});
-  if(!res.ok){grid.textContent='로드 오류';return;}
-  const {users,totalPages} = await res.json();
-  render(users,totalPages);
-}
-
-/* 렌더 */
-function render(users,total){
-  /* 카드 */
-  grid.innerHTML = users.map(u=>`
-   <div class="bg-white rounded shadow p-4 text-center">
-     <img src="${u.photo||'/static/placeholder.png'}" class="mx-auto mb-2 rounded-full w-24 h-24 object-cover">
-     <h2 class="text-lg font-bold">${u.name} <span class="text-gray-500">(${u.praises})</span></h2>
-     <button onclick="addPraise('${u._id}')" class="bg-gray-600 text-white px-3 py-1 rounded text-sm mr-1">칭찬</button>
-     <button onclick="goProfile('${u._id}')" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">보기</button>
-   </div>`).join('');
-
-  /* 페이지네이션 */
-  pager.innerHTML='';
-  const btn=(lbl,p,dis)=>pager.insertAdjacentHTML('beforeend',
-     `<button class="px-2 py-1 ${dis?'opacity-40':''}" ${dis?'disabled':''} onclick="goto(${p})">${lbl}</button>`);
-  btn('<<',1,page===1); btn('<',page-1,page===1);
-  for(let i=1;i<=total;i++) pager.insertAdjacentHTML('beforeend',
-     `<button class="px-2 py-1 ${i===page?'font-bold underline':''}" onclick="goto(${i})">${i}</button>`);
-  btn('>',page+1,page===total); btn('>>',total,page===total);
-}
-window.goto = p => {page=p; load();}
-window.addPraise = id => window.open(`/praise.html?to=${id}`,'p','w=400,h=450');
-window.goProfile= id => location.href=`/profile/${id}`;
-
-/* 모달 + 첫 로딩 */
- document.addEventListener('DOMContentLoaded', () => {
-   //openModal();
-   load();
- });
-</script>
-
+    // 페이지 로딩 시 모달 표시
+    window.onload = function () {
+      openModal();
+    };
+  </script>
 </div>

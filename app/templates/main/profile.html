@@ -57,6 +57,7 @@
 
         // 예시: 사용자K의 프로필을 띄운다고 가정
         document.addEventListener("DOMContentLoaded", () => {
+
             const toUser = '사용자K';
             document.querySelector('h2').innerText = `${toUser}님의 프로필`;
             renderPraiseList(toUser);
@@ -82,7 +83,7 @@
 
             if (receivedPraises.length === 0) {
                 praiseListContainer.innerHTML = `<li class="text-gray-500">받은 칭찬이 없습니다.</li>`;
-                return;
+                 return;
             }
 
             receivedPraises.forEach(p => {
@@ -96,8 +97,10 @@
         `;
             });
         }
+        
 
         document.addEventListener('DOMContentLoaded', () => {
+
             const toUser = getToUserFromQuery();
             if (!toUser) {
                 alert("조회할 사용자 이름이 없습니다.");

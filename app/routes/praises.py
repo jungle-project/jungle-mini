@@ -35,7 +35,7 @@ def create_praise():
         "from_id":    ObjectId(current_user.id),
         "to_id":      ObjectId(to_id),
         "content":    text,
-        "like_count": 0,                    # 향후 공감 수용
+        "like_count": 0,
         "created_at": datetime.utcnow()
     }).inserted_id
 
@@ -67,44 +67,39 @@ def list_sent_by_me():
     docs = [oid_to_str(d) for d in cur]
     return jsonify(docs)
 
-# 5) top10 칭찬 
+# 5) TOP-10 칭찬
 @bp.get("/top")
 @login_required
 def top_praises():
     limit = int(request.args.get("limit", 10))
 
     pipeline = [
-        #  likes(공감) → praise_id 별로 개수 세기
-        { "$group": { "_id": "$praise_id", "likes": { "$sum": 1 } } },
-
-        #  가장 많이 받은 순으로 정렬
-        { "$sort": { "likes": -1 } },
-        { "$limit": limit },
-
-        #  본문·받은 사람 이름 가져오기 (praises + users 조인)
-        { "$lookup": {
-            "from": "praises",
-            "localField": "_id",
-            "foreignField": "_id",
-            "as": "p"
-        }},
-        { "$unwind": "$p" },
-        { "$lookup": {
-            "from": "users",
-            "localField": "p.to_id",
-            "foreignField": "_id",
-            "as": "u"
-        }},
+        # ── 받은 사람 이름 조인 ──
+        {
+            "$lookup": {
+                "from": "users",
+                "localField": "to_id",
+                "foreignField": "_id",
+                "as": "u"
+            }
+        },
         { "$unwind": "$u" },
 
-        #  필요한 필드만
-        { "$project": {
-            "_id": 0,
-            "receiver": "$u.name",
-            "content" : "$p.content",
-            "likes"   : 1
-        }}
+        # ── 필요한 필드만 투영 ──
+        {
+            "$project": {
+                "_id": 0,
+                "receiver": "$u.name",   # 받은 사람 이름
+                "content" : 1,           # 칭찬 본문
+                "likes"   : "$like_count",
+                "created_at": 1          # 동점 시 최신순 정렬용
+            }
+        },
+
+        # ── 공감 많은 순 → 최근 순 정렬 ──
+        { "$sort": { "likes": -1, "created_at": -1 } },
+        { "$limit": limit }
     ]
 
-    docs = list(mongo.db.likes.aggregate(pipeline))
+    docs = list(mongo.db.praises.aggregate(pipeline))
     return jsonify(docs)

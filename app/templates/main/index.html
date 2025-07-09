@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{{ url_for('static', filename='script/navButtonHandler.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/alaramDropDownHandler.js') }}"></script>
     <script src="{{ url_for('static', filename='script/auth.js') }}"></script>
     <title>칭찬감옥</title>
 </head>
@@ -12,13 +13,13 @@
 
     <nav class="flex space-x-4 p-4 justify-center">
         <a href="#"
-            class="hover:bg-blue-700 px-4 py-2 rounded {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'main' else 'text-gray-700 hover:bg-gray-100' }}"
+            class="hover:bg-blue-200 px-4 py-2 rounded {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'main' else 'text-gray-700 hover:bg-gray-100' }}"
             id="mainButton"
             onclick="navButtonHandler('main');">
             메인 보기
         </a>
         <a href="#"
-            class="hover:bg-blue-700 px-4 py-2 rounded {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'hall' else 'text-gray-700 hover:bg-gray-100' }}"
+            class="hover:bg-blue-200 px-4 py-2 rounded {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'hall' else 'text-gray-700 hover:bg-gray-100' }}"
             id="honorButton"
             onclick="navButtonHandler('honer');">
             명예의 전당
