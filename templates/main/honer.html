@@ -1,0 +1,151 @@
+<!-- 명예의 전당 (Tab + 기간 선택 + 결과) -->
+<div id="hallSection" class="mt-6 w-220">
+    <!-- 상위 뷰 탭 -->
+    <div id="hallTabs" class="flex border-b border-gray-300">
+        <button class="hall-tab-btn px-4 py-2 font-semibold {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'main' else 'text-gray-700 hover:bg-gray-100' }} " data-view="top-users"
+            onclick="switchHallView('top-users')">칭찬 많이 받은 사람</button>
+        <button class="hall-tab-btn px-4 py-2 font-semibold {{ 'bg-white text-blue-600 font-semibold shadow' if active_tab == 'main' else 'text-gray-700 hover:bg-gray-100' }}" data-view="top-praises"
+            onclick="switchHallView('top-praises')">공감 많이 받은 칭찬</button>
+    </div>
+
+    <!-- 기간 선택 -->
+    <div class="flex items-center gap-4 mt-4">
+        <label for="hallWeekRange" class="font-medium">조회 기간:</label>
+        <select id="hallWeekRange" class="border px-2 py-1 rounded"></select>
+        <button onclick="renderHallOfFame()" class="bg-blue-500 text-white px-4 py-1 rounded">조회</button>
+    </div>
+
+    <!-- 결과 및 페이징 영역 -->
+    <div id="hallResults" class="mt-6"></div>
+    <div id="hallPagination" class="flex justify-center items-center gap-1 text-sm text-gray-700 mt-4"></div>
+</div>
+
+<script>
+
+    // 전역 상태
+    let hallViewType = 'top-users';
+    let hallFiltered = [];
+    let hallPage = 1;
+    const ITEMS_PER_PAGE = 9;
+
+    //더미데이터
+    const praiselist = Array.from({ length: 30 }, (_, i) => {
+        return {
+            from: `사용자${String.fromCharCode(65 + i % 10)}`,
+            to: `사용자${String.fromCharCode(75 + i % 10)}`,
+            context: `칭찬 내용 ${i + 1}`,
+            empathy: Math.floor(Math.random() * 100),
+            date: getRandomDateString('2025-07-03', '2025-07-09')
+        };
+    });
+
+    function getRandomDateString(start, end) {
+        const startTime = new Date(start).getTime();
+        const endTime = new Date(end).getTime();
+        const randomTime = startTime + Math.random() * (endTime - startTime);
+        return new Date(randomTime).toISOString().slice(0, 10);
+    }
+    //
+    // 날짜 포맷 유틸
+    function formatDate(date) {
+        return date.toISOString().slice(0, 10);
+    }
+
+    // 목~수 주차 계산
+    function getWeekRange(n) {
+        const today = new Date();
+        const day = today.getDay();
+        const thOffset = (day >= 4) ? day - 4 : 7 - (4 - day);
+        const end = new Date(today);
+        end.setDate(today.getDate() - thOffset - 7 * (n - 1));
+        const start = new Date(end);
+        start.setDate(end.getDate() - 6);
+        return { start: formatDate(start), end: formatDate(end) };
+    }
+
+    // 기간 옵션 채움
+    function populateHallWeeks(limit = 4) {
+        const sel = document.getElementById('hallWeekRange');
+        for (let i = 1; i <= limit; i++) {
+            const { start, end } = getWeekRange(i);
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = `${start} ~ ${end}`;
+            sel.appendChild(opt);
+        }
+    }
+
+    // 뷰 타입 전환
+    function switchHallView(type) {
+        hallViewType = type;
+        document.querySelectorAll('.hall-tab-btn').forEach(btn => {
+            btn.classList.toggle('border-b-2 border-blue-500', btn.dataset.view === type);
+        });
+        renderHallOfFame();
+    }
+
+    // 명예의 전당 렌더
+    function renderHallOfFame() {
+        const wk = parseInt(document.getElementById('hallWeekRange').value, 10);
+        const { start, end } = getWeekRange(wk);
+        const results = document.getElementById('hallResults');
+        const pg = document.getElementById('hallPagination');
+        // 필터
+        hallFiltered = praiselist.filter(p => {
+            const d = new Date(p.date);
+            return d >= new Date(start) && d <= new Date(end);
+        });
+        results.innerHTML = '';
+        pg.innerHTML = '';
+        hallPage = 1;
+
+        if (hallViewType === 'top-users') {
+            const map = {};
+            hallFiltered.forEach(p => { if (!map[p.to]) map[p.to] = { name: p.to, count: 0, photo: p.photo }; map[p.to].count++; });
+            const top = Object.values(map).sort((a, b) => b.count - a.count).slice(0, 3);
+            results.className = 'grid grid-cols-3 gap-4';
+            top.forEach(u => {
+                results.innerHTML += `
+          <div class="bg-white p-4 rounded shadow text-center">
+            <img src="${u.photo || 'https://via.placeholder.com/100'}" class="mx-auto mb-2 rounded-full w-24 h-24"/>
+            <h3 class="font-bold">${u.name}</h3>
+            <p class="text-sm text-gray-600">칭찬 수: ${u.count}</p>
+          </div>`;
+            });
+        } else {
+            hallFiltered.sort((a, b) => b.empathy - a.empathy);
+            renderPraisePage();
+        }
+    }
+
+    // 공감 칭찬 페이징
+    function renderPraisePage() {
+        const results = document.getElementById('hallResults');
+        const pg = document.getElementById('hallPagination');
+        results.innerHTML = ''; pg.innerHTML = '';
+        results.className = 'space-y-2';
+        const total = hallFiltered.length;
+        const pages = Math.ceil(total / ITEMS_PER_PAGE);
+        const idxStart = (hallPage - 1) * ITEMS_PER_PAGE;
+        const slice = hallFiltered.slice(idxStart, idxStart + ITEMS_PER_PAGE);
+        slice.forEach((p, i) => {
+            const rank = idxStart + i + 1;
+            results.innerHTML += `<div class="bg-white px-4 py-2 rounded shadow flex justify-between text-sm">
+        <span>${rank}. <strong>${p.to}</strong> - ${p.context}</span>
+        <span class="text-blue-600">공감 ${p.empathy}</span><span>칭찬 날짜: ${p.data}</span>
+      </div>`;
+        });
+        // 페이징 버튼
+        const btn = (t, page, dis) => `<button onclick="changePage(${page})" ${dis ? 'disabled class="opacity-50"' : ''} class="px-2 py-1 hover:underline">${t}</button>`;
+        pg.innerHTML += btn('<<', 1, hallPage === 1);
+        pg.innerHTML += btn('<', hallPage - 1, hallPage === 1);
+        for (let i = 1; i <= pages; i++) { pg.innerHTML += `<button onclick="changePage(${i})" class="px-2 py-1 ${i === hallPage ? 'font-bold underline' : ''}">${i}</button>`; }
+        pg.innerHTML += btn('>', hallPage + 1, hallPage === pages);
+        pg.innerHTML += btn('>>', pages, hallPage === pages);
+    }
+
+    function changePage(p) { const pages = Math.ceil(hallFiltered.length / ITEMS_PER_PAGE); hallPage = Math.min(Math.max(1, p), pages); renderPraisePage(); }
+
+    // 초기화
+    window.onload = () => { populateHallWeeks(); switchHallView('top-users'); };
+</script>

@@ -1,0 +1,143 @@
+<div class="tabs w-220 h-full">
+    <button
+        class="tab-button bg-blue-500 text-white py-2 px-4 rounded-t-md hover:bg-blue-700 focus:outline-none active:bg-blue-700"
+        data-tab="tab1"> 지난 주 모범수 </button>
+    <button class="tab-button bg-blue-200 text-gray-700 py-2 px-4 rounded-t-md hover:bg-blue-300 focus:outline-none"
+        data-tab="tab2"> 과거 기록 </button>
+    <div class="tab-content p-4 rounded-b-md" id="tab1">
+
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl font-bold mb-4">🏆 지난 주 모범수 TOP3</h1>
+            <br>
+            <div id="topUsersGrid" class="grid grid-cols-3 gap-4"></div>
+        </div>
+        <br>
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-2xl font-bold mb-4">🏆 지난 주 가장 공감받은 칭찬 TOP3</h1>
+            <br>
+            <div id="mostwarmpraises" class="grid grid-cols-3 gap-4"></div>
+        </div>
+    </div>
+
+    <div class="tab-content p-4 rounded-b-md hidden" id="tab2"></div>
+</div>
+
+<script>
+    //
+    const users = Array.from({ length: 20 }, (_, i) => ({
+        name: `사용자${String.fromCharCode(65 + i)}`,
+        photo: `https://via.placeholder.com/150?text=U${i + 1}`,
+        praises: Math.floor(Math.random() * 100)
+    }));
+
+    const praiselist = Array.from({ length: 10 }, (_, i) => ({
+        from: `사용자${String.fromCharCode(65 + i)}`,
+        to: `사용자${String.fromCharCode(75 + i)}`,
+        empathy: Math.floor(Math.random() * 100),
+        context: `칭찬 내용 ${i + 1}`
+    }));
+
+
+    let filteredUsers = [...users];
+    let currentPage = 1;
+
+
+    //탭버튼 구현
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabId = button.dataset.tab;
+
+            // 모든 탭 버튼에서 'active' 클래스 제거
+            tabButtons.forEach(btn => btn.classList.remove('active', 'bg-blue-700', 'text-white'));
+            // 모든 탭 내용 영역에서 'active' 클래스 제거
+            tabContents.forEach(content => content.classList.add('hidden'));
+
+            // 클릭된 탭 버튼에 'active' 클래스 추가
+            button.classList.add('active', 'bg-blue-700', 'text-white');
+            // 연결된 탭 내용 영역에서 'hidden' 클래스 제거
+            document.getElementById(tabId).classList.remove('hidden');
+        });
+    });
+    //
+
+    //TOP3용
+    function renderTop3() {
+        // praises 기준으로 상위 3명 정렬
+        const top3 = [...users]
+            .sort((a, b) => b.praises - a.praises)
+            .slice(0, 3);
+
+        const grid = document.getElementById('topUsersGrid');
+        grid.innerHTML = '';
+
+        top3.forEach(user => {
+            grid.innerHTML += `
+      <div class="bg-white rounded shadow p-4 text-center">
+        <img src="${user.photo}" alt="${user.name}" class="mx-auto mb-2 rounded-full w-24 h-24 object-cover" />
+        <h2 class="text-lg font-bold">${user.name} (${user.praises})</h2>
+      </div>
+    `;
+        });
+    }
+
+    function praiseTop3() {
+        const top3 = [...praiselist]
+            .sort((a, b) => b.empathy - a.empathy)
+            .slice(0, 3);
+
+        const grid = document.getElementById('mostwarmpraises');
+        grid.innerHTML = '';
+
+        top3.forEach(user => {
+            grid.innerHTML += `
+          <div class="bg-white rounded shadow p-4 text-center">
+            <h2 class="text-lg font-bold">${user.from} → ${user.to}</h2>
+            <p class="text-gray-600">공감 수: ${user.empathy}</p>
+            <p class="text-sm text-gray-500">내용: ${user.context}</p>
+          </div>
+        `;
+        });
+    }
+
+    // 프로필 이동 함수
+    function goToProfile(name) {
+        window.location.href = `/profile.html?name=${encodeURIComponent(name)}`;
+    }
+
+    // 초기 렌더
+    renderTop3();
+    //TOP3용
+    praiseTop3();
+
+
+    //지난 기록 보기용
+    function renderPagination() {
+        const pagination = document.getElementById('pagination');
+        pagination.innerHTML = '';
+
+        const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+        const addBtn = (text, page, disabled = false) => {
+            pagination.innerHTML += `<button onclick="goToPage(${page})" ${disabled ? 'disabled class="opacity-50"' : ''} class="px-2 py-1 hover:underline">${text}</button>`;
+        };
+
+        addBtn('<<', 1, currentPage === 1);
+        addBtn('<', currentPage - 1, currentPage === 1);
+
+        for (let i = 1; i <= totalPages; i++) {
+            pagination.innerHTML += `<button onclick="goToPage(${i})" class="px-2 py-1 ${i === currentPage ? 'font-bold underline' : ''}">${i}</button>`;
+        }
+
+        addBtn('>', currentPage + 1, currentPage === totalPages);
+        addBtn('>>', totalPages, currentPage === totalPages);
+    }
+
+    function goToPage(page) {
+        const totalPages = Math.ceil(filteredUsers.length / USERS_PER_PAGE);
+        currentPage = Math.min(Math.max(1, page), totalPages);
+        renderUsers();
+    }
+    //지난 기록 보기용
+</script>
