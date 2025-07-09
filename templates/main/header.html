@@ -7,7 +7,6 @@
         <p class="font-bold text-5xl">칭찬감옥</p>
     </div>
 
-
     <div class="flex flex-row items-center">
         <a href="">
             <img class="h-full object-scale-down" src="{{ url_for('static', filename='img/profile.png') }}"/>
@@ -25,11 +24,11 @@
                     <img class="w-10 h-10 object-fill inline-block" src="{{ url_for('static', filename='img/alarmCountBg.png') }}">
                 </div>
                 
-                <a href="#" onclick="alaramDropBoxHandler();">
+                <a href="#" onclick="alaramDropDownHandler('visible');">
                     <img class="h-full object-scale-down" src="{{ url_for('static', filename='img/alarm.png') }}"/>
                 </a>
 
-                <div id="alaramDropBoxContent" class="hidden absolute w-48 bg-white rounded shadow mt-2">
+                <div id="alaramDropBoxContent" onclick="alaramDropDownHandler('invisible');" class="hidden absolute w-48 bg-white rounded shadow mt-2">
                     <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
                     <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>
                     <a href="#" onclick="" class="block px-4 py-2 text-gray-800 hover:bg-blue-100">하드코딩</a>

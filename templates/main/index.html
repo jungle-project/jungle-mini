@@ -4,10 +4,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="{{ url_for('static', filename='script/navButtonHandler.js') }}"></script>
-    <script src="{{ url_for('static', filename='script/alaramDropBox.js') }}"></script>
+    <script src="{{ url_for('static', filename='script/alaramDropDownHandler.js') }}"></script>
     <title>칭찬감옥</title>
 </head>
-<body>
+<body onclick="alaramDropDownHandler('invisible');">
     <header>{% include 'main/header.html' %}</header>
 
     <nav class="flex space-x-4 p-4 justify-center">
@@ -27,7 +27,7 @@
      
     <div class="flex justify-center">
         <article id="mainView" class="{{ 'visible inline-block' if active_tab == 'main' else 'invisible hidden' }}">{% include 'main/main.html' %}</article>  
-        <article id="honorView" class="{{ 'visible inline-block' if active_tab == 'honor' else 'invisible hidden' }}">{% include 'main/honer.html' %}</article>  
+        <article id="honorView" class="{{ 'visible inline-block' if active_tab == 'honor' else 'invisible hidden' }}">{% include 'main/honor.html' %}</article>  
         <sidebar>{% include 'main/sidebar.html' %}</sidebar>
     </div>
 </body>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 @app.route('/')
@@ -16,6 +16,12 @@ def signup():
 @app.route('/findpassword')
 def findpassword():
     return render_template("login/findpassword.html")
+
+
+@app.route('/modal')
+def modal():
+    mode = request.args.get('mode', default = 'readonly', type = str)
+    return render_template('modal/praiseModal.html', mode=mode)
 
 if __name__ == '__main__':
     app.run(debug=True)

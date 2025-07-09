@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>칭찬하기</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+<body class="bg-white min-w-[300px] max-w-[360px] mx-auto rounded-lg shadow-lg">
+
+  {% include 'login/header.html' %}
+
+  <main class="p-4 space-y-4 text-sm">
+    <!-- 프로필 비교: 작게 -->
+
+    <div class="flex justify-evenly">
+      <div class="flex flex-col items-center">
+        <img id="fromPhoto" src="{{ url_for('static', filename='img/profile.png') }}" alt="송신인" class="w-12 h-12 rounded-full mb-1" />
+        <span id="fromName" class="truncate w-16 text-center">송신인</span>
+      </div>  
+      
+      <div class="flex flex-col items-center">
+          <img id="toPhoto" src="{{ url_for('static', filename='img/profile.png') }}" alt="수신인" class="w-12 h-12 rounded-full mb-1" />
+          <span id="toName" class="truncate w-16 text-center">수신인</span>
+      </div>
+    </div>
+    
+
+    <!-- 입력 폼: 컴팩트 -->
+    <section>
+      <textarea id="praiseInput" rows="3" class="w-full h-30 border-0 resize-none border-gray-300 rounded px-2 py-1 focus:outline-none" placeholder="칭찬 내용을 입력하세요 (50자 이내)" {%if mode == 'readonly'%} disabled {%endif%}>
+          하드코딩 (데이터)
+      </textarea>
+    </section>
+
+    <!-- 버튼 그룹: 작게 -->
+    <section class="flex justify-between">
+
+      {%if mode != 'readonly'%}
+        <button id="submitPraise" class="flex-1 bg-blue-500 text-white px-4 py-1 rounded mr-1 text-sm ">등록</button>
+      {%endif%}
+
+      <a href="/" id="cancelPraise" class="flex-1 bg-gray-200 text-gray-700 px-4 py-1 rounded ml-1 text-sm">취소</a>
+    </section>
+  </main>
+
+  <script>
+    function cancelPraise() {
+        window.close();
+    }
+
+    document.getElementById('cancelPraise').addEventListener('click', () => window.close());
+    // TODO: submitPraise 클릭 이벤트로 API 호출 추가
+  </script>
+</body>
+</html>

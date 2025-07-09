@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>칭찬 프로필</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="{{ url_for('static', filename='script/rendering.js') }}"></script>
+
+</head>
+
+<body class="max-w-md mx-auto p-6">
+
+    <h2 id="profileTitle" class="text-xl font-bold mb-4">님의 프로필</h2>
+    <img id="profilePhoto" src="https://via.placeholder.com/100" class="rounded-full w-24 h-24 mb-4" />
+
+    <h3 class="text-lg font-semibold mb-2">받은 칭찬 목록</h3>
+    <ul id="praiseList" class="space-y-2"></ul>
+
+    <script>
+        // 랜덤 날짜 함수
+        function getRandomDateString(start, end) {
+            const startTime = new Date(start).getTime();
+            const endTime = new Date(end).getTime();
+            const randomTime = startTime + Math.random() * (endTime - startTime);
+            return new Date(randomTime).toISOString().slice(0, 10);
+        }
+
+        // 더미 데이터 생성
+        function generatePraiseList(count) {
+            return Array.from({ length: count }, (_, i) => ({
+                from: `사용자${String.fromCharCode(65 + i % 10)}`,
+                to: `사용자${String.fromCharCode(75 + i % 10)}`,
+                context: `칭찬 내용 ${i + 1}`,
+                empathy: Math.floor(Math.random() * 100),
+                date: getRandomDateString('2025-06-27', '2025-07-03')
+            }));
+        }
+
+        function renderPraiseList(toName) {
+            const filtered = praiselist.filter(p => p.to === toName);
+            const listContainer = document.getElementById('praiseList');
+            listContainer.innerHTML = '';
+
+            filtered.forEach(p => {
+                listContainer.innerHTML += `
+        <li class="border p-2 rounded shadow-sm">
+          <div class="text-sm text-gray-700">작성자: ${p.from}</div>
+          <div>${p.context}</div>
+          <div class="text-xs text-gray-500">공감 수: ${p.empathy}</div>
+          <div class="text-xs text-gray-400">${p.date}</div>
+        </li>
+      `;
+            });
+        }
+
+        // 예시: 사용자K의 프로필을 띄운다고 가정
+        document.addEventListener("DOMContentLoaded", () => {
+            const toUser = '사용자K';
+            document.querySelector('h2').innerText = `${toUser}님의 프로필`;
+            renderPraiseList(toUser);
+        });
+        const praiselist = generatePraiseList(50);
+
+        // URL 파라미터에서 to=값 추출
+        function getToUserFromQuery() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('to');
+        }
+
+        function renderProfile(toUser) {
+            // 제목
+            document.getElementById('profileTitle').innerText = `${toUser}님의 프로필`;
+            // 사진 (임시 프로필 이미지)
+            document.getElementById('profilePhoto').src = `https://via.placeholder.com/100?text=${toUser}`;
+
+            const praiseListContainer = document.getElementById('praiseList');
+            praiseListContainer.innerHTML = '';
+
+            const receivedPraises = praiselist.filter(p => p.to === toUser);
+
+            if (receivedPraises.length === 0) {
+                praiseListContainer.innerHTML = `<li class="text-gray-500">받은 칭찬이 없습니다.</li>`;
+                return;
+            }
+
+            receivedPraises.forEach(p => {
+                praiseListContainer.innerHTML += `
+          <li class="border p-2 rounded shadow-sm">
+            <div class="text-sm text-gray-700">작성자: ${p.from}</div>
+            <div class="mt-1">${p.context}</div>
+            <div class="text-xs text-gray-500 mt-1">공감 수: ${p.empathy}</div>
+            <div class="text-xs text-gray-400">${p.date}</div>
+          </li>
+        `;
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const toUser = getToUserFromQuery();
+            if (!toUser) {
+                alert("조회할 사용자 이름이 없습니다.");
+                return;
+            }
+            renderProfile(toUser);
+        });
+    </script>
+</body>
+
+</html>
