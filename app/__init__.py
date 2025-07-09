@@ -124,11 +124,12 @@ def create_app() -> Flask:
     # ────────────────────────────────────────────────────
 
     # ── 블루프린트 등록 ─────────────────────────────────
-    from app.routes import auth, praises, likes, users
+    from app.routes import auth, praises, likes, users, web
     app.register_blueprint(auth.bp)
     app.register_blueprint(praises.bp)
     app.register_blueprint(likes.bp)
     app.register_blueprint(users.bp)
+    app.register_blueprint(web.bp)
     # ────────────────────────────────────────────────────
 
     return app
