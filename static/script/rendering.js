@@ -10,13 +10,21 @@
           <div class="bg-white rounded shadow p-4 text-center">
             <img src="${user.photo}" alt="${user.name}" class="mx-auto mb-2 rounded-full w-24 h-24 object-cover" />
             <h2 class="text-lg font-bold">${user.name} (${user.praises})</h2>
-            <a href="/" class="bg-gray-600 text-white px-3 py-1 rounded text-sm mr-1">칭찬</a>
-            <a href="/" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">보기</a>
+            <button onclick="goProfile();" class="bg-gray-600 text-white px-3 py-1 rounded text-sm mr-1">칭찬</button>
+            <button onclick="goView();" class="bg-gray-600 text-white px-3 py-1 rounded text-sm">보기</button>
           </div>
         `;
       });
 
       renderPagination();
+    }
+
+    function goProfile() {
+        location.href = "/modal?mode=write";
+    }
+
+    function goView() {
+        location.href = "/profile";
     }
 
     function renderPagination() {

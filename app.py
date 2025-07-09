@@ -15,8 +15,11 @@ def signup():
 
 @app.route('/findpassword')
 def findpassword():
-    return render_template("login/findpassword.html")
+    return render_template("login/findPassword.html")
 
+@app.route('/profile')
+def profile():
+    return render_template("main/profile.html")
 
 @app.route('/modal')
 def modal():
